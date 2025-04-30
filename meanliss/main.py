@@ -11,12 +11,12 @@ def main(stdscr: curses.window):
     stdscr.nodelay(True)
     stdscr.timeout(0)
 
-    state = get_init_state("hwss", 5)
+    state = get_init_state("castle", 5)
 
     while True:
-        draw_state(stdscr, state)
+        draw_state(stdscr, state, '#', '.')
         state = evolve(state)
-        sleep(0.2)
+        sleep(0.3)
 
         if stdscr.getch() != -1:
             break
