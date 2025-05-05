@@ -29,17 +29,14 @@ def to_decimal(number: str, base: int):
     return decimal
 
 def numberOfPowerfulInt(start, finish, limit, s):
-    str_finish = str(finish)
-    str_start = str(start)
-
-    result = 0
+    str_finish, str_start = str(finish), str(start)
 
     upper_positions = len(str_finish) - len(s)
 
     if upper_positions == 0:
         return int(start <= int(s) <= finish)
 
-    upper_bound = distill(str_finish[:upper_positions], limit)
+    upper_bound = distill(str_finish[: upper_positions], limit)
 
     result = to_decimal(upper_bound, limit + 1)
 

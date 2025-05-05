@@ -51,7 +51,7 @@ def draw_semi_circle(t: turtle, size: float = 0):
         t.forward(size / 10)
         t.left(1)
 
-def mitsubishi_spiral(t: turtle):
+def draw_mitsubishi_spiral(t: turtle):
     colors = ['white', 'orange']
     size = 10
 
@@ -78,21 +78,24 @@ screen.setup(width=1.0, height=1.0)
 t = turtle.Turtle()
 t.pensize(1.5)
 t.speed(0)
+
 colors = ['white', 'orange', 'yellow', 'blue', 'red', 'violet']
 colors = ['white', 'orange']
 colors = ['#E4ACB2', '#B83453', '#CF5C75']
+
 screen.tracer(8, 25)
 
 size = 0
 
-for epoch in range(50):
-    color = colors[epoch % len(colors)]
+t.pensize(4.5)
 
-    t.pencolor(color)
+for epoch in range(1000):
+    t.pencolor(colors[epoch % len(colors)])
+
+    size = (epoch + size) / 5
+
+    draw_lozi(t, size)
+
     t.left(30)
-    draw_semi_circle(t, (epoch + size) / 1.5)
-
-t.left(30)
-draw_semi_circle(t, (epoch + size) / 1.5)
 
 screen.exitonclick()
