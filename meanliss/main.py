@@ -11,7 +11,7 @@ def main(stdscr: curses.window):
     stdscr.nodelay(True)
     stdscr.timeout(0)
 
-    state = get_init_state("castle", 5)
+    state = get_init_state("launcher", 5)
 
     while True:
         draw_state(stdscr, state, '#', '.')
