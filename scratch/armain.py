@@ -39,6 +39,13 @@ class Perceptron:
 
         return confusions
     
+    def predict(self, x: np.ndarray):
+        prediction = (x @ self.weights) + self.bias
+
+        activated = self.__activation(prediction)
+
+        return activated
+    
     def __test(self):
         prediction = (self.test_features @ self.weights) + self.bias
 
@@ -53,9 +60,13 @@ class Adeline:
         sample_size = features.shape[0]
         n_features = features.shape[1]
 
-        self.train_size = int(sample_size * 0.9)
+        self.__rng = np.random.default_rng(seed=random_state)
 
-        self.features, self.targets = features.to_numpy(), targets.to_numpy()
+        shuffle = self.__rng.permutation(range(len(features)))
+
+        self.features, self.targets = features.to_numpy()[shuffle, :], targets.to_numpy()[shuffle]
+
+        self.train_size = int(sample_size * 0.9)
 
         self.train_features = self.features[:self.train_size, :]
         self.train_targets = self.targets[:self.train_size].reshape(-1, 1)
@@ -67,13 +78,12 @@ class Adeline:
         self.bias = np.float64(0)
 
         self.__activation = lambda x: np.where(x >= 0.5, 1, 0)
-        self.__rng = np.random.default_rng(seed=random_state)
 
     def fit(self, eta: float, epoch: int, batch_cut: int = 1):
 
-        mini_batch_size = len(self.train_features) // batch_cut
+        batch_size = len(self.train_features) // batch_cut
 
-        confusions, losses = np.empty(epoch), np.empty(epoch)
+        train_loss, test_loss = np.empty(epoch), np.empty(epoch)
         
         for i in range(epoch):
             shuffle = self.__rng.permutation(range(len(self.train_features)))
@@ -84,27 +94,34 @@ class Adeline:
             errors = np.empty(batch_cut)
 
             mini_batch_counter = 0
-            for j in range(0, len(self.train_features), mini_batch_size):
-                prediction = (self.train_features[j: j + mini_batch_size + 1, :] @ self.weights) + self.bias
+            for j in range(0, len(self.train_features), batch_size):
+                prediction = (self.train_features[j: j + batch_size + 1, :] @ self.weights) + self.bias
 
-                error = (self.train_targets[j: j + mini_batch_size + 1, :] - prediction)
+                error = (self.train_targets[j: j + batch_size + 1, :] - prediction)
 
-                self.weights += eta * ((self.train_features[j: j + mini_batch_size + 1, :].T @ error) / self.train_size)
+                self.weights += eta * ((self.train_features[j: j + batch_size + 1, :].T @ error) / self.train_size)
                 self.bias += eta * error.mean()
 
                 errors[mini_batch_counter] = error.sum()
                 mini_batch_counter += 1
 
-            confusions[i] = self.__test()
-            losses[i] = np.mean(np.square(errors)) / 2
+            train_loss[i] = np.mean(np.square(errors)) / 2
+            test_loss[i] = self.__test()
 
-        return confusions, losses
+        return train_loss, test_loss
     
-    def __test(self):
-        prediction = (self.test_features @ self.weights) + self.bias
+    def predict(self, x: np.ndarray):
+        prediction = (x @ self.weights) + self.bias
 
         activated = self.__activation(prediction)
 
-        error = (self.test_targets - activated)
+        return activated
+        
+    def __test(self):
+        prediction = (self.test_features @ self.weights) + self.bias
 
-        return np.count_nonzero(error)
+        errors = (self.test_targets - prediction)
+
+        test_loss = np.mean(np.square(errors)) / 2
+
+        return test_loss
