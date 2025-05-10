@@ -23,7 +23,7 @@ class Perceptron:
 
     def fit(self, eta: float, epoch: int):
         
-        errors = np.empty(epoch)
+        confusions = np.empty(epoch)
 
         for i in range(epoch):
             prediction = (self.train_features @ self.weights) + self.bias
@@ -35,10 +35,9 @@ class Perceptron:
             self.weights += eta * (self.train_features.T @ error)
             self.bias += eta * error.sum()
 
-            errors[i] = self.__test()
+            confusions[i] = self.__test()
 
-
-        return errors
+        return confusions
     
     def __test(self):
         prediction = (self.test_features @ self.weights) + self.bias
@@ -68,13 +67,13 @@ class Adeline:
         self.bias = np.float64(0)
 
         self.__activation = lambda x: np.where(x >= 0.5, 1, 0)
-        self.__rng = np.random.default_rng(seed=42)
+        self.__rng = np.random.default_rng(seed=random_state)
 
     def fit(self, eta: float, epoch: int, batch_size: int = 1):
 
         batch_size = len(self.train_features) // batch_size
 
-        errors, losses = np.empty(epoch), np.empty(epoch)
+        confusions, losses = np.empty(epoch), np.empty(epoch)
         
         for i in range(epoch):
             shuffle = self.__rng.permutation(range(len(self.train_features)))
@@ -82,6 +81,9 @@ class Adeline:
             self.train_features = self.train_features[shuffle, :]
             self.train_targets = self.train_targets[shuffle]
 
+            errors = np.empty(batch_size)
+
+            mini_batch_counter = 0
             for j in range(0, len(self.train_features), batch_size):
                 prediction = (self.train_features[j: j + batch_size + 1, :] @ self.weights) + self.bias
 
@@ -90,10 +92,13 @@ class Adeline:
                 self.weights += eta * ((self.train_features[j: j + batch_size + 1, :].T @ error) / self.train_size)
                 self.bias += eta * error.mean()
 
-            errors[i] = self.__test()
-            losses[i] = np.mean(np.square(error)) / 2
+                errors[mini_batch_counter] = error.sum()
+                mini_batch_counter += 1
 
-        return errors, losses
+            confusions[i] = self.__test()
+            losses[i] = np.mean(np.square(errors)) / 2
+
+        return confusions, losses
     
     def __test(self):
         prediction = (self.test_features @ self.weights) + self.bias
