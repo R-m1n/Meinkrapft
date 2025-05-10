@@ -69,9 +69,9 @@ class Adeline:
         self.__activation = lambda x: np.where(x >= 0.5, 1, 0)
         self.__rng = np.random.default_rng(seed=random_state)
 
-    def fit(self, eta: float, epoch: int, batch_size: int = 1):
+    def fit(self, eta: float, epoch: int, batch_cut: int = 1):
 
-        batch_size = len(self.train_features) // batch_size
+        mini_batch_size = len(self.train_features) // batch_cut
 
         confusions, losses = np.empty(epoch), np.empty(epoch)
         
@@ -81,15 +81,15 @@ class Adeline:
             self.train_features = self.train_features[shuffle, :]
             self.train_targets = self.train_targets[shuffle]
 
-            errors = np.empty(batch_size)
+            errors = np.empty(batch_cut)
 
             mini_batch_counter = 0
-            for j in range(0, len(self.train_features), batch_size):
-                prediction = (self.train_features[j: j + batch_size + 1, :] @ self.weights) + self.bias
+            for j in range(0, len(self.train_features), mini_batch_size):
+                prediction = (self.train_features[j: j + mini_batch_size + 1, :] @ self.weights) + self.bias
 
-                error = (self.train_targets[j: j + batch_size + 1, :] - prediction)
+                error = (self.train_targets[j: j + mini_batch_size + 1, :] - prediction)
 
-                self.weights += eta * ((self.train_features[j: j + batch_size + 1, :].T @ error) / self.train_size)
+                self.weights += eta * ((self.train_features[j: j + mini_batch_size + 1, :].T @ error) / self.train_size)
                 self.bias += eta * error.mean()
 
                 errors[mini_batch_counter] = error.sum()
