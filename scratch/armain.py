@@ -160,7 +160,7 @@ class LogisticRegression:
         self.test_features = self.features[self.train_size:, :]
         self.test_targets = self.targets[self.train_size:].reshape(-1, 1)
 
-        self.weights = np.random.normal(loc=0, scale=0.01, size=(1, n_features))
+        self.weights = self.__rng.normal(loc=0, scale=0.01, size=(1, n_features))
         self.bias = np.float64(0)
 
         self.__epsilon = 1e-15
@@ -171,7 +171,7 @@ class LogisticRegression:
         
         self.__threshold = lambda x: np.where(x >= 0.5, 1, 0)
 
-    def fit(self, eta: float, epochs: int, batch_cut: int = 1):
+    def fit(self, eta: float, epochs: int, *, batch_cut: int = 1, l2: float = 0):
 
         batch_size = len(self.train_features) // batch_cut
 
@@ -194,13 +194,16 @@ class LogisticRegression:
 
                 error = targets_batch - activated
 
-                self.weights += eta * ((features_batch.T @ error) / batch_size).T
+                regularization_term = (l2 * self.weights) / batch_size
+
+                self.weights += eta * ((features_batch.T @ error) / batch_size).T + regularization_term
                 self.bias += eta * error.mean()
                 
-                batch_loss += -np.sum(((targets_batch * np.log(activated))) + (((1 - targets_batch) * np.log(1 - activated))))
+                batch_loss += -np.sum(((targets_batch * np.log(activated))) + (((1 - targets_batch) * np.log(1 - activated)))) / batch_size
+                batch_loss += (l2 / (2 * batch_size)) * (np.sum(np.square(self.weights)))
 
             train_loss[i] = batch_loss / batch_cut
-            test_loss[i] = self.__test()
+            test_loss[i] = self.__test(l2)
 
         return train_loss, test_loss
     
@@ -213,13 +216,13 @@ class LogisticRegression:
 
         return prediction
         
-    def __test(self):
+    def __test(self, l2: float = 0):
         net_input = self.__net_input(self.test_features)
 
         activated = self.__activation(net_input)
 
-        loss = -(self.test_targets * np.log(activated)) - ((1 - self.test_targets) * np.log(1 - activated))
+        test_loss = -np.sum((self.test_targets * np.log(activated)) + ((1 - self.test_targets) * np.log(1 - activated))) / self.test_size
 
-        test_loss = np.mean(loss)
+        test_loss += (l2 / (2 * self.test_size)) * (np.sum(np.square(self.weights)))
 
         return test_loss
