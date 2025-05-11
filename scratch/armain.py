@@ -22,11 +22,11 @@ class Perceptron:
         self.__net_input = lambda x: x @ self.weights.T + self.bias
         self.__activation = lambda x: np.where(x > 0, 1, 0)
 
-    def fit(self, eta: float, epoch: int):
+    def fit(self, eta: float, epochs: int):
         
-        confusions = np.empty(epoch)
+        confusions = np.empty(epochs)
 
-        for i in np.arange(epoch):
+        for i in np.arange(epochs):
             net_input = self.__net_input(self.train_features)
 
             activated = self.__activation(net_input)
@@ -85,21 +85,20 @@ class Adeline:
         self.__activation = lambda x: x
         self.__threshold = lambda x: np.where(x >= 0.5, 1, 0)
 
-    def fit(self, eta: float, epoch: int, batch_cut: int = 1):
+    def fit(self, eta: float, epochs: int, batch_cut: int = 1):
 
         batch_size = len(self.train_features) // batch_cut
 
-        train_loss, test_loss = np.empty(epoch), np.empty(epoch)
-        
-        for i in np.arange(epoch):
+        train_loss, test_loss = np.empty(epochs), np.empty(epochs)
+
+        for i in np.arange(epochs):
             indexes = self.__shuffle_indexes(self.train_features)
 
             self.train_features = self.train_features[indexes, :]
             self.train_targets = self.train_targets[indexes]
 
-            losses = np.empty(batch_cut)
+            batch_loss = np.float64(0)
 
-            batch_counter = 0
             for j in np.arange(0, len(self.train_features), batch_size):
                 features_batch = self.train_features[j: j + batch_size, :]
                 targets_batch = self.train_targets[j: j + batch_size, :]
@@ -113,12 +112,9 @@ class Adeline:
                 self.weights += eta * ((features_batch.T @ error) / batch_size).T
                 self.bias += eta * error.mean()
 
-                batch_loss = np.mean(np.square(error)) / 2
+                batch_loss += np.mean(np.square(error)) / 2
 
-                losses[batch_counter] = batch_loss
-                batch_counter += 1
-
-            train_loss[i] = np.mean(losses)
+            train_loss[i] = batch_loss / batch_cut
             test_loss[i] = self.__test()
 
         return train_loss, test_loss
@@ -135,9 +131,9 @@ class Adeline:
     def __test(self):
         net_input = self.__net_input(self.test_features)
 
-        errors = (self.test_targets - net_input)
+        error = (self.test_targets - net_input)
 
-        test_loss = np.mean(np.square(errors)) / 2
+        test_loss = np.mean(np.square(error)) / 2
 
         return test_loss
 
@@ -180,16 +176,14 @@ class LogisticRegression:
         batch_size = len(self.train_features) // batch_cut
 
         train_loss, test_loss = np.empty(epochs), np.empty(epochs)
-        
+
         for i in np.arange(epochs):
             indexes = self.__shuffle_indexes(self.train_features)
 
             self.train_features = self.train_features[indexes, :]
             self.train_targets = self.train_targets[indexes]
 
-            errors = np.empty(batch_cut)
-
-            batch_counter = 0
+            batch_loss = np.float64(0)
             for j in np.arange(0, len(self.train_features), batch_size):
                 features_batch = self.train_features[j: j + batch_size, :]
                 targets_batch = self.train_targets[j: j + batch_size, :]
@@ -203,12 +197,9 @@ class LogisticRegression:
                 self.weights += eta * ((features_batch.T @ error) / batch_size).T
                 self.bias += eta * error.mean()
                 
-                batch_loss = -np.sum(((targets_batch * np.log(activated))) + (((1 - targets_batch) * np.log(1 - activated))))
+                batch_loss += -np.sum(((targets_batch * np.log(activated))) + (((1 - targets_batch) * np.log(1 - activated))))
 
-                errors[batch_counter] = batch_loss
-                batch_counter += 1
-
-            train_loss[i] = np.mean(errors)
+            train_loss[i] = batch_loss / batch_cut
             test_loss[i] = self.__test()
 
         return train_loss, test_loss
@@ -227,8 +218,8 @@ class LogisticRegression:
 
         activated = self.__activation(net_input)
 
-        losses = -(self.test_targets * np.log(activated)) - ((1 - self.test_targets) * np.log(1 - activated))
+        loss = -(self.test_targets * np.log(activated)) - ((1 - self.test_targets) * np.log(1 - activated))
 
-        test_loss = np.mean(losses)
+        test_loss = np.mean(loss)
 
         return test_loss
