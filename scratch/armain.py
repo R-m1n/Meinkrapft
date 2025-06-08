@@ -167,7 +167,7 @@ class LogisticRegression:
 
         self.__net_input = lambda x: x @ self.weights.T + self.bias
 
-        self.__activation = lambda x: np.clip(1. / (1. + np.exp(-np.clip(x, -250, 250))), self.__epsilon, 1 - self.__epsilon)
+        self.__activation = lambda x: np.clip(1 / (1 + np.exp(-x)), self.__epsilon, 1 - self.__epsilon)
         
         self.__threshold = lambda x: np.where(x >= 0.5, 1, 0)
 
@@ -226,3 +226,42 @@ class LogisticRegression:
         test_loss += (l2 / (2 * self.test_size)) * (np.sum(np.square(self.weights)))
 
         return test_loss
+    
+class MLP:
+    def __init__(self, n_features):
+        self.n_features = n_features
+
+        self.rng = np.random.default_rng()
+
+        self.weights_1 = self.rng.standard_normal(size=(self.n_features, 16))
+        self.bias_1 = self.rng.standard_normal(size=(16, 1))
+
+        self.weights_2 = self.rng.standard_normal(size=(16, 10))
+        self.bias_2 = self.rng.standard_normal(size=(10, 1))
+
+        self.activation = np.vectorize(lambda z: 1.0 / (1.0 + np.exp(-z)))
+
+    def forward(self, X):
+
+        z_1 = (X @ self.weights_1) + self.bias_1
+        a_1 = self.activation(z_1)
+
+        z_2 = (a_1 @ self.weights_2) + self.bias_2
+        a_2 = self.activation(z_2)
+
+        return z_1, a_1, z_2, a_2
+    
+    def backward(self, z_1, a_1, z_2, a_2, y):
+
+        d_J__d_a_2 = 2 * (y - a_2) / y.shape[0]
+
+        d_a_2__d_z_2 = a_2 * (1 - a_2)
+
+        delta_2 = d_J__d_a_2 * d_a_2__d_z_2
+
+        pass
+
+
+
+
+
